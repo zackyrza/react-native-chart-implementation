@@ -47,34 +47,45 @@ const HomeScreen = ({navigation}) => {
                 let data = [];
                 let finalState = {};
 
-                let minimumDateMoment = moment(fetchedData[0].customer_paid.split(' ')[0]);
-                let maximumDateMoment = moment(fetchedData[lengthFetchedData - 1].customer_paid.split(' ')[0]);
-                let currentDate = moment(minimumDateMoment);
-
-                let daysDiff = maximumDateMoment.diff(minimumDateMoment, 'days');
-
-                for (let i = 0, value = 0, size = daysDiff; i <= size; i++) {
-                    data[i] = value;
-                }
-                for (let i = 0, size = daysDiff; i <= size; i++) {
-                    labels[i] = moment(currentDate).format('YYYY-MM-DD');
-                    currentDate = moment(currentDate).add(1, 'days');
-                }
-                ;
+                // let minimumDateMoment = moment(fetchedData[0].customer_paid.split(' ')[0]);
+                // let maximumDateMoment = moment(fetchedData[lengthFetchedData - 1].customer_paid.split(' ')[0]);
+                // let currentDate = moment(minimumDateMoment);
+                //
+                // let daysDiff = maximumDateMoment.diff(minimumDateMoment, 'days');
+                //
+                // for (let i = 0, value = 0, size = daysDiff; i <= size; i++) {
+                //     data[i] = value;
+                // }
+                // for (let i = 0, size = daysDiff; i <= size; i++) {
+                //     labels[i] = moment(currentDate).format('YYYY-MM-DD');
+                //     currentDate = moment(currentDate).add(1, 'days');
+                // }
 
                 await fetchedData.map((t, d, e) => {
                     // console.log(e[d+1]);
-                    const date = t.customer_paid.split(' ')[0];
-                    const dateMoment = moment(t.customer_paid.split(' ')[0]);
-                    const diffToMinimumDate = dateMoment.diff(minimumDateMoment, 'days');
-
-                    // console.log({diffToMinimumDate});
-
+                    const date = moment(t.customer_paid.split(' ')[0]).format('DD MMM, YYYY');
                     const price = parseInt(t.price);
 
-                    if (!data[diffToMinimumDate].price || data[diffToMinimumDate].price < price) {
-                        data[diffToMinimumDate] = price;
+                    const id = labels.indexOf(date);
+                    if(id >= 0){
+                        if(data[id] < price){
+                            data[id] = price;
+                        }
+                    }else{
+                        data.push(price);
+                        labels.push(date);
                     }
+
+                    // const dateMoment = moment(t.customer_paid.split(' ')[0]);
+                    // const diffToMinimumDate = dateMoment.diff(minimumDateMoment, 'days');
+                    //
+                    // // console.log({diffToMinimumDate});
+                    //
+                    // const price = parseInt(t.price);
+                    //
+                    // if (!data[diffToMinimumDate].price || data[diffToMinimumDate].price < price) {
+                    //     data[diffToMinimumDate] = price;
+                    // }
                 });
 
                 finalState = {
@@ -91,79 +102,75 @@ const HomeScreen = ({navigation}) => {
     };
 
     const formatRupiah = (angka, prefix, suffix) => {
-        let number_string = angka.toString(),
-            split = number_string.split(','),
-            sisa = split[0].length % 3,
-            rupiah = split[0].substr(0, sisa),
-            ribuan = split[0].substr(sisa).match(/\d{3}/gi);
-
-        // tambahkan titik jika yang di input sudah menjadi angka ribuan
-        if (ribuan) {
-            let separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
+        let reverse = angka.toString().split('').reverse().join(''),
+            ribuan = reverse.match(/\d{1,3}/g);
+        ribuan = ribuan.join(',').split('').reverse().join('');
+        if(prefix){
+            ribuan = prefix + ribuan;
         }
-
-        rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
-        if(suffix) rupiah += suffix;
-        return prefix == undefined ? rupiah : (rupiah ? 'Rp. ' + rupiah : '');
+        if(suffix){
+            ribuan += suffix;
+        }
+        return ribuan;
     };
 
     return (
         <>
             <View style={styles.container}>
-                <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: Dimensions.get('window').width - 20,
-                }}>
-                    <Button color={selectedDuration === '1m' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {
-                        setSelectedDuration('1m');
-                        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});
-                        setShowData({
-                            labels: graphData.labels.slice(graphData.labels.length - 31),
-                            data: graphData.data.slice(graphData.data.length - 31),
-                        });
-                    }}>
-                        1 Month
-                    </Button>
-                    <Button color={selectedDuration === '3m' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {
-                        setSelectedDuration('3m');
-                        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});
-                        setShowData({
-                            labels: graphData.labels.slice(graphData.labels.length - 91),
-                            data: graphData.data.slice(graphData.data.length - 91),
-                        });
-                    }}>
-                        3 Month
-                    </Button>
-                    <Button color={selectedDuration === '1y' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {
-                        setSelectedDuration('1y');
-                        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});
-                        setShowData({
-                            labels: graphData.labels.slice(graphData.labels.length - 366),
-                            data: graphData.data.slice(graphData.data.length - 366),
-                        });
-                    }}>
-                        1 Year
-                    </Button>
-                    <Button color={selectedDuration === 'all' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {
-                        setSelectedDuration('all');
-                        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});
-                        setShowData({
-                            labels: graphData.labels,
-                            data: graphData.data,
-                        });
-                    }}>
-                        All
-                    </Button>
-                </View>
+                {/*<View style={{*/}
+                {/*    flexDirection: 'row',*/}
+                {/*    justifyContent: 'space-between',*/}
+                {/*    alignItems: 'center',*/}
+                {/*    width: Dimensions.get('window').width - 20,*/}
+                {/*}}>*/}
+                {/*    <Button color={selectedDuration === '1m' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {*/}
+                {/*        setSelectedDuration('1m');*/}
+                {/*        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});*/}
+                {/*        setShowData({*/}
+                {/*            labels: graphData.labels.slice(graphData.labels.length - 31),*/}
+                {/*            data: graphData.data.slice(graphData.data.length - 31),*/}
+                {/*        });*/}
+                {/*    }}>*/}
+                {/*        1 Month*/}
+                {/*    </Button>*/}
+                {/*    <Button color={selectedDuration === '3m' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {*/}
+                {/*        setSelectedDuration('3m');*/}
+                {/*        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});*/}
+                {/*        setShowData({*/}
+                {/*            labels: graphData.labels.slice(graphData.labels.length - 91),*/}
+                {/*            data: graphData.data.slice(graphData.data.length - 91),*/}
+                {/*        });*/}
+                {/*    }}>*/}
+                {/*        3 Month*/}
+                {/*    </Button>*/}
+                {/*    <Button color={selectedDuration === '1y' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {*/}
+                {/*        setSelectedDuration('1y');*/}
+                {/*        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});*/}
+                {/*        setShowData({*/}
+                {/*            labels: graphData.labels.slice(graphData.labels.length - 366),*/}
+                {/*            data: graphData.data.slice(graphData.data.length - 366),*/}
+                {/*        });*/}
+                {/*    }}>*/}
+                {/*        1 Year*/}
+                {/*    </Button>*/}
+                {/*    <Button color={selectedDuration === 'all' ? '#fb8c00' : '#bbb'} mode="contained" onPress={() => {*/}
+                {/*        setSelectedDuration('all');*/}
+                {/*        setTooltipPos({x: 0, y: 0, visible: false, value: '0', label: ''});*/}
+                {/*        setShowData({*/}
+                {/*            labels: graphData.labels,*/}
+                {/*            data: graphData.data,*/}
+                {/*        });*/}
+                {/*    }}>*/}
+                {/*        All*/}
+                {/*    </Button>*/}
+                {/*</View>*/}
                 {(showData.labels.length > 0 && showData.data.length > 0) && (
                     <LineChart
                         onDataPointClick={(data) => {
                             let isSamePoint = (tooltipPos.x === data.x && tooltipPos.y === data.y);
 
-                            isSamePoint ? setTooltipPos((previousState) => {
+                            if(isSamePoint){
+                                setTooltipPos((previousState) => {
                                     return {
                                         ...previousState,
                                         value: formatRupiah(data.value, 'Rp. '),
@@ -171,9 +178,15 @@ const HomeScreen = ({navigation}) => {
                                         visible: !previousState.visible,
                                     }
                                 })
-                                :
-                                setTooltipPos({ x: data.x, label: showData.labels[data.index], value: formatRupiah(data.value, 'Rp. '), y: data.y, visible: true });
-
+                            }else{
+                                setTooltipPos({
+                                    x: data.x,
+                                    label: showData.labels[data.index],
+                                    value: formatRupiah(data.value, 'Rp. '),
+                                    y: data.y,
+                                    visible: true
+                                });
+                            }
                         }}
                         decorator={() => {
                             return tooltipPos.visible ? <View>
@@ -182,7 +195,7 @@ const HomeScreen = ({navigation}) => {
                                           y={tooltipPos.y + 10}
                                           width="150"
                                           height="50"
-                                          fill="black" />
+                                          fill="rgba(0, 255, 0, 0.5)" />
                                     <TextSVG
                                         x={tooltipPos.x + 5}
                                         y={tooltipPos.y + 30}
@@ -213,23 +226,16 @@ const HomeScreen = ({navigation}) => {
                             ],
                         }}
                         width={Dimensions.get('window').width - 20} // from react-native
-                        height={Dimensions.get('window').height * 0.4}
-                        formatYLabel={y => formatRupiah(y/1000000, 'Rp. ', 'jt')}
-                        // withHorizontalLabels={false}
-                        withVerticalLabels={false}
-                        hidePointsAtIndex={showData.data.map((t, i) => (t === 0) && i)}
+                        height={Dimensions.get('window').height * 0.62}
+                        formatYLabel={y => formatRupiah((parseInt(y)/1000000).toFixed(2), '', ' M')}
+                        verticalLabelRotation={90}
                         yAxisInterval={1} // optional, defaults to 1
-                        // yLabelsOffset={-25}
                         chartConfig={{
-                            backgroundColor: '#e26a00',
-                            backgroundGradientFrom: '#fb8c00',
-                            backgroundGradientTo: '#ffa726',
-                            // decimalPlaces: 0, // optional, defaults to 2dp
-                            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                            // style: {
-                            //
-                            // },
+                            backgroundColor: '#fff',
+                            backgroundGradientFrom: '#fff',
+                            backgroundGradientTo: '#fff',
+                            color: (opacity = 1) => `rgba(0, 255, 100, ${opacity})`,
+                            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                             strokeWidth: 2.5,
                         }}
                         bezier
@@ -240,7 +246,7 @@ const HomeScreen = ({navigation}) => {
                         // withDots={false}
                         fromZero={true}
                         withInnerLines={false}
-                        withOuterLines={false}
+                        withOuterLines={true}
                         strokeWidth={3}
                     />
                 )}
